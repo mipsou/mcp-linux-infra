@@ -1,0 +1,21 @@
+---
+# Sudo configuration tasks
+
+- name: Deploy sudoers configuration for pra-runner
+  ansible.builtin.copy:
+    src: ../../../system/sudoers.d/pra-runner
+    dest: /etc/sudoers.d/pra-runner
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Verify sudoers syntax
+  ansible.builtin.command:
+    cmd: visudo -c
+  changed_when: false
+  register: sudoers_check
+
+- name: Display sudoers validation result
+  ansible.builtin.debug:
+    msg: "Sudoers configuration valid: {{ sudoers_check.stdout }}"

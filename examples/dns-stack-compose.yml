@@ -1,0 +1,93 @@
+# Docker Compose pour la stack DNS (Unbound + Caddy)
+# MCP Linux Infra v0.3.0
+
+version: '3.8'
+
+services:
+  # Unbound - Serveur DNS récursif
+  unbound:
+    image: mvance/unbound:latest
+    container_name: unbound
+    hostname: unbound
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      # Configuration Unbound
+      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+      # Zones locales (optionnel)
+      - ./unbound/zones:/opt/unbound/etc/unbound/zones:ro
+      # Logs
+      - ./logs/unbound:/var/log/unbound
+    networks:
+      infra-net:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "drill", "@127.0.0.1", "google.com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Caddy - Reverse proxy avec HTTPS automatique
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    hostname: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      # Caddyfile
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Sites web (optionnel)
+      - ./caddy/sites:/srv:ro
+      # Données Caddy (certificats, etc.)
+      - caddy_data:/data
+      - caddy_config:/config
+      # Logs
+      - ./logs/caddy:/var/log/caddy
+    networks:
+      infra-net:
+        ipv4_address: 172.20.0.20
+    environment:
+      - CADDY_ADMIN=0.0.0.0:2019
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2019/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # DNS-over-HTTPS (DoH) avec Caddy (optionnel)
+  # Proxy DoH pour Unbound
+  doh-proxy:
+    image: satishweb/doh-server:latest
+    container_name: doh-proxy
+    hostname: doh-proxy
+    depends_on:
+      - unbound
+    environment:
+      - UPSTREAM_DNS_SERVER=udp:unbound:53
+      - DOH_HTTP_PREFIX=/dns-query
+      - DOH_SERVER_LISTEN=:8053
+      - DOH_SERVER_TIMEOUT=10
+      - DOH_SERVER_TRIES=3
+    networks:
+      - infra-net
+    restart: unless-stopped
+
+networks:
+  infra-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

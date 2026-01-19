@@ -1,0 +1,7 @@
+---
+# Handlers for mcp_infra role
+
+- name: Reload SSH
+  ansible.builtin.systemd:
+    name: sshd
+    state: reloaded

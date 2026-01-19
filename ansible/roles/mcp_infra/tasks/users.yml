@@ -1,0 +1,49 @@
+---
+# User creation tasks
+
+- name: Create mcp-reader group
+  ansible.builtin.group:
+    name: mcp-reader
+    state: present
+    system: true
+
+- name: Create mcp-reader user
+  ansible.builtin.user:
+    name: mcp-reader
+    comment: "MCP Read-Only Diagnostics User"
+    group: mcp-reader
+    groups: []
+    shell: /bin/bash  # Pas de restricted shell pour compatibility
+    home: /home/mcp-reader
+    create_home: true
+    system: true
+    state: present
+
+- name: Create pra-runner group
+  ansible.builtin.group:
+    name: pra-runner
+    state: present
+    system: true
+
+- name: Create pra-runner user
+  ansible.builtin.user:
+    name: pra-runner
+    comment: "PRA Execution User (with validation)"
+    group: pra-runner
+    groups: []
+    shell: /usr/sbin/nologin  # Pas de shell interactif
+    home: /home/pra-runner
+    create_home: true
+    system: true
+    state: present
+
+- name: Set proper permissions on home directories
+  ansible.builtin.file:
+    path: "/home/{{ item }}"
+    state: directory
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "0700"
+  loop:
+    - mcp-reader
+    - pra-runner

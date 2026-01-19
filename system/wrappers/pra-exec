@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# PRA Execution Wrapper
+#
+# Forced-command SSH wrapper pour l'utilisateur pra-runner.
+# Whitelist stricte d'actions PRA validées.
+#
+# Déployé sur: /usr/local/bin/pra-exec
+# Permissions: 750, owner root:pra-runner
+#
+# Configuration authorized_keys:
+# command="/usr/local/bin/pra-exec",no-pty,no-agent-forwarding,no-X11-forwarding ssh-ed25519 ...
+#
+
+set -euo pipefail
+
+# Log TOUTES les tentatives d'exécution (audit trail)
+LOGFILE="/var/log/pra-exec.log"
+echo "$(date -Iseconds) USER=$USER CMD=$SSH_ORIGINAL_COMMAND" >> "$LOGFILE" 2>/dev/null || true
+
+# Si pas de commande, rejeter
+if [ -z "${SSH_ORIGINAL_COMMAND:-}" ]; then
+    echo "ERROR: No command specified" >&2
+    exit 1
+fi
+
+# Whitelist stricte d'actions PRA
+case "$SSH_ORIGINAL_COMMAND" in
+    # DNS Actions
+    "restart_unbound")
+        echo "Executing: systemctl restart unbound"
+        exec sudo /usr/local/bin/pra-run restart_unbound
+        ;;
+
+    "flush_dns_cache")
+        echo "Executing: resolvectl flush-caches"
+        exec sudo /usr/local/bin/pra-run flush_dns_cache
+        ;;
+
+    # Reverse Proxy Actions
+    "reload_caddy")
+        echo "Executing: systemctl reload caddy"
+        exec sudo /usr/local/bin/pra-run reload_caddy
+        ;;
+
+    "restart_caddy")
+        echo "Executing: systemctl restart caddy"
+        exec sudo /usr/local/bin/pra-run restart_caddy
+        ;;
+
+    # Container Actions
+    "restart_container")
+        # Note: Nécessite un paramètre container_name
+        # Pour l'instant, implémentation simple sans paramètre
+        echo "ERROR: restart_container requires container_name parameter (not yet implemented)" >&2
+        exit 1
+        ;;
+
+    # Log Management
+    "rotate_logs")
+        echo "Executing: logrotate force"
+        exec sudo /usr/local/bin/pra-run rotate_logs
+        ;;
+
+    # System Actions (HIGH IMPACT - à utiliser avec précaution)
+    "reboot_system")
+        echo "WARNING: System reboot requested"
+        exec sudo /usr/local/bin/pra-run reboot_system
+        ;;
+
+    # Default: DENY
+    *)
+        echo "DENIED: Action not whitelisted: $SSH_ORIGINAL_COMMAND" >&2
+        echo "$(date -Iseconds) DENIED: $SSH_ORIGINAL_COMMAND" >> "$LOGFILE" 2>/dev/null || true
+        exit 1
+        ;;
+esac

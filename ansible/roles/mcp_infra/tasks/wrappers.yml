@@ -1,0 +1,36 @@
+---
+# Wrapper installation tasks
+
+- name: Copy mcp-wrapper script
+  ansible.builtin.copy:
+    src: ../../../system/wrappers/mcp-wrapper
+    dest: /usr/local/bin/mcp-wrapper
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy pra-exec wrapper script
+  ansible.builtin.copy:
+    src: ../../../system/wrappers/pra-exec
+    dest: /usr/local/bin/pra-exec
+    owner: root
+    group: pra-runner
+    mode: "0750"
+
+- name: Copy pra-run script
+  ansible.builtin.copy:
+    src: ../../../system/pra-run
+    dest: /usr/local/bin/pra-run
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Verify wrapper scripts are executable
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: file
+    mode: "0755"
+  loop:
+    - /usr/local/bin/mcp-wrapper
+    - /usr/local/bin/pra-exec
+    - /usr/local/bin/pra-run

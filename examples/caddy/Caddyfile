@@ -1,0 +1,84 @@
+# Caddyfile - Reverse Proxy Configuration
+# MCP Linux Infra v0.3.0
+
+# Global options
+{
+    # Email pour Let's Encrypt
+    email admin@example.com
+
+    # Admin API
+    admin 0.0.0.0:2019
+
+    # Logs
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
+
+# DNS-over-HTTPS (DoH) endpoint
+doh.example.com {
+    reverse_proxy doh-proxy:8053
+
+    # HTTPS automatique via Let's Encrypt
+    tls {
+        protocols tls1.2 tls1.3
+    }
+
+    # Headers de sécurité
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+    }
+
+    log {
+        output file /var/log/caddy/doh.log
+    }
+}
+
+# Monitoring dashboard (optionnel)
+monitor.example.com {
+    reverse_proxy grafana:3000
+
+    # Basic auth (à configurer)
+    # basicauth {
+    #     admin $2a$14$...hashed_password...
+    # }
+
+    log {
+        output file /var/log/caddy/monitor.log
+    }
+}
+
+# API Gateway (optionnel)
+api.example.com {
+    # Rate limiting
+    rate_limit {
+        zone dynamic {
+            key {remote_host}
+            events 100
+            window 1m
+        }
+    }
+
+    # MCP API endpoints
+    handle /mcp/* {
+        reverse_proxy mcp-server:8080
+    }
+
+    # Ansible AWX API
+    handle /awx/* {
+        reverse_proxy awx-web:8052
+    }
+
+    log {
+        output file /var/log/caddy/api.log
+    }
+}
+
+# Default catch-all
+:80 {
+    respond "MCP Linux Infra - No route configured" 404
+}

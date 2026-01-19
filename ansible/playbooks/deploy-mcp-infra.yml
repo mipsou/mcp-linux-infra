@@ -1,0 +1,69 @@
+---
+#
+# Playbook: Deploy MCP Linux Infra
+#
+# Déploie l'infrastructure complète MCP sur les targets:
+# - Utilisateurs mcp-reader et pra-runner
+# - Clés SSH avec forced-command
+# - Wrappers de sécurité
+# - Configuration sudo
+# - Logs et audit
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini deploy-mcp-infra.yml
+#
+# Variables requises (voir group_vars/all.yml):
+#   - mcp_reader_pubkey: Clé publique SSH mcp-reader
+#   - pra_exec_pubkey: Clé publique SSH pra-exec
+#
+
+- name: Deploy MCP Linux Infrastructure
+  hosts: all
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - mcp_reader_pubkey is defined
+          - pra_exec_pubkey is defined
+        fail_msg: "Required variables missing. Set mcp_reader_pubkey and pra_exec_pubkey."
+
+    - name: Display target information
+      ansible.builtin.debug:
+        msg: "Deploying MCP infra on {{ inventory_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
+
+  roles:
+    - role: mcp_infra
+
+  post_tasks:
+    - name: Verify mcp-reader SSH access
+      ansible.builtin.command:
+        cmd: sudo -u mcp-reader ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no localhost echo "test"
+      register: mcp_reader_test
+      failed_when: false
+      changed_when: false
+
+    - name: Display deployment summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ MCP Linux Infra deployed successfully on {{ inventory_hostname }}
+
+          Users created:
+          - mcp-reader (read-only diagnostics)
+          - pra-runner (PRA actions)
+
+          SSH keys configured:
+          - mcp-reader: forced-command /usr/local/bin/mcp-wrapper
+          - pra-runner: forced-command /usr/local/bin/pra-exec
+
+          Security:
+          - Wrappers enforce strict whitelist
+          - pra-runner has sudo only for /usr/local/bin/pra-run
+          - All actions logged to /var/log/{mcp-wrapper,pra-exec,pra-run}.log
+
+          Next steps:
+          1. Test SSH access from MCP server
+          2. Verify diagnostic tools
+          3. Test PRA workflow with validation

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "linux-infra": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:\\infra\\mcp-servers\\mcp-linux-infra",
+        "run",
+        "mcp-linux-infra"
+      ],
+      "env": {
+        "LINUX_MCP_LOG_LEVEL": "INFO",
+        "LINUX_MCP_ALLOWED_HOSTS": "*"
+      }
+    }
+  }
+}

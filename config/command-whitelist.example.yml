@@ -1,0 +1,218 @@
+# Command Authorization Whitelist
+#
+# This file defines which SSH commands can be executed and at what authorization level.
+#
+# Authorization Levels:
+#   - auto_approved: Execute immediately (read-only commands)
+#   - manual_approval: Require human approval before execution
+#   - blocked: Refuse execution (dangerous commands)
+#
+# Each command rule must have:
+#   - pattern: Regex pattern to match the command
+#   - ssh_user: SSH user to use (mcp-reader or pra-runner)
+#   - description: Human-readable description
+#   - rationale: Why this authorization level?
+
+# ============================================================================
+# AUTO-APPROVED COMMANDS (Read-Only)
+# ============================================================================
+# These commands execute immediately without approval.
+# Use for diagnostic and monitoring commands that don't modify system state.
+
+auto_approved:
+  # System Information
+  - pattern: "^systemctl status\\s+"
+    ssh_user: "mcp-reader"
+    description: "Check service status"
+    rationale: "Read-only, no system impact"
+
+  - pattern: "^systemctl list-units"
+    ssh_user: "mcp-reader"
+    description: "List system units"
+    rationale: "Read-only diagnostic"
+
+  - pattern: "^journalctl\\s+"
+    ssh_user: "mcp-reader"
+    description: "Read system logs"
+    rationale: "Read-only, diagnostic purpose"
+
+  - pattern: "^df\\s+-h"
+    ssh_user: "mcp-reader"
+    description: "Check disk usage"
+    rationale: "Read-only system info"
+
+  - pattern: "^free\\s+-h"
+    ssh_user: "mcp-reader"
+    description: "Check memory usage"
+    rationale: "Read-only system info"
+
+  - pattern: "^uptime"
+    ssh_user: "mcp-reader"
+    description: "Check system uptime"
+    rationale: "Read-only system info"
+
+  # Network Diagnostics
+  - pattern: "^ss\\s+-[lntup]+"
+    ssh_user: "mcp-reader"
+    description: "List network connections"
+    rationale: "Read-only network diagnostic"
+
+  - pattern: "^ip\\s+addr"
+    ssh_user: "mcp-reader"
+    description: "Show IP addresses"
+    rationale: "Read-only network info"
+
+  - pattern: "^ip\\s+route"
+    ssh_user: "mcp-reader"
+    description: "Show routing table"
+    rationale: "Read-only network info"
+
+  # Container Management (Read-Only)
+  - pattern: "^podman\\s+ps"
+    ssh_user: "mcp-reader"
+    description: "List containers"
+    rationale: "Read-only container info"
+
+  - pattern: "^podman\\s+inspect\\s+"
+    ssh_user: "mcp-reader"
+    description: "Inspect container"
+    rationale: "Read-only container info"
+
+  - pattern: "^podman\\s+logs\\s+"
+    ssh_user: "mcp-reader"
+    description: "Read container logs"
+    rationale: "Read-only diagnostic"
+
+  # Ansible Dry-Run
+  - pattern: "^ansible-playbook\\s+.*--check"
+    ssh_user: "mcp-reader"
+    description: "Ansible dry-run (check mode)"
+    rationale: "Read-only, no system changes"
+
+  # Log Files
+  - pattern: "^cat\\s+/var/log/"
+    ssh_user: "mcp-reader"
+    description: "Read log files"
+    rationale: "Read-only, diagnostic"
+
+  - pattern: "^tail\\s+.*\\s+/var/log/"
+    ssh_user: "mcp-reader"
+    description: "Tail log files"
+    rationale: "Read-only, diagnostic"
+
+# ============================================================================
+# MANUAL APPROVAL REQUIRED
+# ============================================================================
+# These commands require human approval before execution.
+# Use for commands that modify system state or could cause service interruption.
+
+manual_approval:
+  # Service Management
+  - pattern: "^systemctl restart\\s+"
+    ssh_user: "pra-runner"
+    description: "Restart system service"
+    rationale: "Service interruption, needs approval"
+
+  - pattern: "^systemctl reload\\s+"
+    ssh_user: "pra-runner"
+    description: "Reload service configuration"
+    rationale: "Config change, minimal impact but needs review"
+
+  - pattern: "^systemctl start\\s+"
+    ssh_user: "pra-runner"
+    description: "Start system service"
+    rationale: "System state change"
+
+  - pattern: "^systemctl stop\\s+"
+    ssh_user: "pra-runner"
+    description: "Stop system service"
+    rationale: "Service interruption"
+
+  # Container Management
+  - pattern: "^podman restart\\s+"
+    ssh_user: "pra-runner"
+    description: "Restart container"
+    rationale: "Service interruption"
+
+  - pattern: "^podman stop\\s+"
+    ssh_user: "pra-runner"
+    description: "Stop container"
+    rationale: "Service interruption"
+
+  - pattern: "^podman start\\s+"
+    ssh_user: "pra-runner"
+    description: "Start container"
+    rationale: "System state change"
+
+  - pattern: "^podman rm\\s+"
+    ssh_user: "pra-runner"
+    description: "Remove container"
+    rationale: "Permanent change"
+
+  # Ansible Execution
+  - pattern: "^ansible-playbook\\s+(?!.*--check)"
+    ssh_user: "pra-runner"
+    description: "Execute Ansible playbook"
+    rationale: "Infrastructure changes, needs approval"
+
+  # System Operations
+  - pattern: "^reboot$"
+    ssh_user: "pra-runner"
+    description: "Reboot system"
+    rationale: "CRITICAL: Full system restart"
+
+  - pattern: "^shutdown\\s+"
+    ssh_user: "pra-runner"
+    description: "Shutdown system"
+    rationale: "CRITICAL: System shutdown"
+
+# ============================================================================
+# BLOCKED COMMANDS
+# ============================================================================
+# These commands are blocked for security and cannot be executed under any circumstances.
+
+blocked:
+  # Destructive Filesystem Operations
+  - pattern: ".*rm\\s+-rf\\s+/(?!tmp|var/tmp)"
+    ssh_user: "none"
+    description: "Recursive delete from root"
+    rationale: "DANGEROUS: Could destroy system"
+
+  - pattern: ".*dd\\s+.*of=/dev/[sv]d"
+    ssh_user: "none"
+    description: "Direct disk write"
+    rationale: "DANGEROUS: Could corrupt filesystem"
+
+  - pattern: ".*mkfs\\."
+    ssh_user: "none"
+    description: "Format filesystem"
+    rationale: "DANGEROUS: Data loss"
+
+  - pattern: ".*fdisk\\s+"
+    ssh_user: "none"
+    description: "Partition disk"
+    rationale: "DANGEROUS: Could corrupt partitions"
+
+  # Fork Bomb and DoS
+  - pattern: ".*:\\(\\)\\{.*:\\|:.*\\};:"
+    ssh_user: "none"
+    description: "Fork bomb"
+    rationale: "DANGEROUS: DoS attack"
+
+  # Privilege Escalation Attempts
+  - pattern: ".*sudo\\s+su\\s*-"
+    ssh_user: "none"
+    description: "Privilege escalation"
+    rationale: "BLOCKED: Use proper authorization"
+
+  # Kernel/System Tampering
+  - pattern: ".*sysctl\\s+-w"
+    ssh_user: "none"
+    description: "Modify kernel parameters"
+    rationale: "DANGEROUS: Could destabilize system"
+
+  # Network Tampering
+  - pattern: ".*iptables\\s+-F"
+    ssh_user: "none"
+    description: "Flush firewall rules"
+    rationale: "DANGEROUS: Security exposure"

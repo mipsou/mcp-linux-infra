@@ -1,0 +1,16 @@
+{
+  "test-cmd": {
+    "command": "test-cmd",
+    "count": 1,
+    "first_seen": "2026-01-19T10:49:51.294477",
+    "last_seen": "2026-01-19T10:49:51.294477",
+    "users": [
+      "test"
+    ],
+    "hosts": [
+      "localhost"
+    ],
+    "risk_level": "UNKNOWN",
+    "category": "unknown"
+  }
+}

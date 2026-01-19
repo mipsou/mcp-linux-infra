@@ -1,0 +1,49 @@
+---
+# Logging setup tasks
+
+- name: Create log directory for MCP
+  ansible.builtin.file:
+    path: /var/log/mcp
+    state: directory
+    owner: root
+    group: adm
+    mode: "0750"
+
+- name: Create log files with proper permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: touch
+    owner: "{{ item.owner }}"
+    group: adm
+    mode: "0640"
+    modification_time: preserve
+    access_time: preserve
+  loop:
+    - path: /var/log/mcp-wrapper.log
+      owner: mcp-reader
+    - path: /var/log/pra-exec.log
+      owner: pra-runner
+    - path: /var/log/pra-run.log
+      owner: root
+
+- name: Configure logrotate for MCP logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/mcp
+    content: |
+      /var/log/mcp-wrapper.log
+      /var/log/pra-exec.log
+      /var/log/pra-run.log {
+          daily
+          rotate 30
+          compress
+          delaycompress
+          notifempty
+          create 0640 root adm
+          sharedscripts
+          postrotate
+              # Optional: signal processes to reopen log files
+          endscript
+      }
+    owner: root
+    group: root
+    mode: "0644"

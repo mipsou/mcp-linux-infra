@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# PRA Actions Runner
+#
+# Exécute les actions PRA réelles avec sudo.
+# Appelé uniquement par /usr/local/bin/pra-exec.
+#
+# Déployé sur: /usr/local/bin/pra-run
+# Permissions: 750, owner root:root
+#
+# Configuration sudoers:
+# pra-runner ALL=(root) NOPASSWD: /usr/local/bin/pra-run
+#
+
+set -euo pipefail
+
+# Log de démarrage
+LOGFILE="/var/log/pra-run.log"
+echo "$(date -Iseconds) ACTION=$1 CALLER=$USER" >> "$LOGFILE" 2>/dev/null || true
+
+# Validation: doit être appelé avec un argument
+if [ $# -eq 0 ]; then
+    echo "ERROR: No action specified" >&2
+    exit 1
+fi
+
+ACTION="$1"
+
+# Exécution des actions
+case "$ACTION" in
+    restart_unbound)
+        echo "Restarting Unbound DNS service..."
+        systemctl restart unbound
+        systemctl --no-pager status unbound
+        echo "$(date -Iseconds) SUCCESS: restart_unbound" >> "$LOGFILE"
+        ;;
+
+    flush_dns_cache)
+        echo "Flushing DNS cache..."
+        resolvectl flush-caches
+        resolvectl statistics
+        echo "$(date -Iseconds) SUCCESS: flush_dns_cache" >> "$LOGFILE"
+        ;;
+
+    reload_caddy)
+        echo "Reloading Caddy configuration..."
+        systemctl reload caddy
+        systemctl --no-pager status caddy
+        echo "$(date -Iseconds) SUCCESS: reload_caddy" >> "$LOGFILE"
+        ;;
+
+    restart_caddy)
+        echo "Restarting Caddy service..."
+        systemctl restart caddy
+        systemctl --no-pager status caddy
+        echo "$(date -Iseconds) SUCCESS: restart_caddy" >> "$LOGFILE"
+        ;;
+
+    rotate_logs)
+        echo "Forcing log rotation..."
+        logrotate -f /etc/logrotate.conf
+        echo "$(date -Iseconds) SUCCESS: rotate_logs" >> "$LOGFILE"
+        ;;
+
+    reboot_system)
+        echo "WARNING: System reboot in 10 seconds..."
+        echo "$(date -Iseconds) CRITICAL: reboot_system" >> "$LOGFILE"
+        sleep 10
+        systemctl reboot
+        ;;
+
+    *)
+        echo "ERROR: Unknown action: $ACTION" >&2
+        echo "$(date -Iseconds) FAILED: unknown action $ACTION" >> "$LOGFILE"
+        exit 1
+        ;;
+esac

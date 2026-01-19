@@ -1,0 +1,85 @@
+# Docker Compose pour les conteneurs Ansible
+# MCP Linux Infra v0.3.0
+
+version: '3.8'
+
+services:
+  # Ansible Controller - Master node
+  ansible-controller:
+    image: ansible/ansible:latest
+    container_name: ansible-controller
+    hostname: ansible-controller
+    volumes:
+      # Playbooks Ansible
+      - ./playbooks:/ansible/playbooks
+      # Inventory
+      - ./inventory:/ansible/inventory
+      # SSH keys (read-only)
+      - ~/.ssh:/root/.ssh:ro
+      # Logs
+      - ./logs:/var/log/ansible
+    networks:
+      - infra-net
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+      - ANSIBLE_RETRY_FILES_ENABLED=False
+      - ANSIBLE_LOG_PATH=/var/log/ansible/ansible.log
+    restart: unless-stopped
+
+  # Ansible AWX (optionnel - UI web pour Ansible)
+  # Décommenter si vous voulez une interface web
+  # awx-web:
+  #   image: ansible/awx:latest
+  #   container_name: awx-web
+  #   hostname: awx-web
+  #   depends_on:
+  #     - awx-postgres
+  #     - awx-redis
+  #   ports:
+  #     - "8080:8052"
+  #   volumes:
+  #     - awx-projects:/var/lib/awx/projects
+  #   environment:
+  #     - SECRET_KEY=changeme_secret_key
+  #     - DATABASE_USER=awx
+  #     - DATABASE_PASSWORD=changeme_db_password
+  #     - DATABASE_NAME=awx
+  #     - DATABASE_HOST=awx-postgres
+  #     - DATABASE_PORT=5432
+  #     - REDIS_HOST=awx-redis
+  #   networks:
+  #     - infra-net
+  #   restart: unless-stopped
+
+  # awx-postgres:
+  #   image: postgres:15
+  #   container_name: awx-postgres
+  #   hostname: awx-postgres
+  #   volumes:
+  #     - awx-postgres-data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=awx
+  #     - POSTGRES_PASSWORD=changeme_db_password
+  #     - POSTGRES_DB=awx
+  #   networks:
+  #     - infra-net
+  #   restart: unless-stopped
+
+  # awx-redis:
+  #   image: redis:7
+  #   container_name: awx-redis
+  #   hostname: awx-redis
+  #   networks:
+  #     - infra-net
+  #   restart: unless-stopped
+
+networks:
+  infra-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  awx-projects:
+  awx-postgres-data:

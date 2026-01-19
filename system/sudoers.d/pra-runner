@@ -1,0 +1,17 @@
+# Sudoers configuration for pra-runner user
+#
+# Deploy to: /etc/sudoers.d/pra-runner
+# Permissions: 0440 (read-only for root)
+# Validation: visudo -cf /etc/sudoers.d/pra-runner
+#
+# CRITICAL: Ne jamais autoriser:
+# - sudo bash / sudo sh (shell escape)
+# - wildcards dans les commandes
+# - commandes génériques (cp, mv, rm, etc.)
+#
+
+# PRA runner peut exécuter UNIQUEMENT /usr/local/bin/pra-run
+pra-runner ALL=(root) NOPASSWD: /usr/local/bin/pra-run
+
+# Deny everything else
+pra-runner ALL=(root) !/bin/bash, !/bin/sh, !/usr/bin/bash, !/usr/bin/sh

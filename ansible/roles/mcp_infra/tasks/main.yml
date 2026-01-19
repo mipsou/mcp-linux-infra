@@ -1,0 +1,17 @@
+---
+# Main tasks for mcp_infra role
+
+- name: Include user creation tasks
+  ansible.builtin.import_tasks: users.yml
+
+- name: Include SSH configuration tasks
+  ansible.builtin.import_tasks: ssh.yml
+
+- name: Include wrapper installation tasks
+  ansible.builtin.import_tasks: wrappers.yml
+
+- name: Include sudo configuration tasks
+  ansible.builtin.import_tasks: sudo.yml
+
+- name: Include logging setup tasks
+  ansible.builtin.import_tasks: logging.yml

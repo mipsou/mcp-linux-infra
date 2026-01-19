@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "linux-infra": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:\\infra\\mcp-servers\\mcp-linux-infra",
+        "run",
+        "mcp-linux-infra"
+      ],
+      "env": {
+        "SSH_AUTH_SOCK": "\\\\.\\pipe\\openssh-ssh-agent",
+        "LINUX_MCP_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

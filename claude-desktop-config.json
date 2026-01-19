@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "mcp-linux-infra": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_linux_infra.server"
+      ],
+      "cwd": "D:\\infra\\mcp-servers\\mcp-linux-infra",
+      "env": {
+        "PYTHONPATH": "D:\\infra\\mcp-servers\\mcp-linux-infra\\src",
+        "LINUX_MCP_SSH_KEY_PATH": "${HOME}/.ssh/mcp-reader",
+        "LINUX_MCP_PRA_KEY_PATH": "${HOME}/.ssh/pra-runner",
+        "LINUX_MCP_PRA_USER": "pra-runner",
+        "LINUX_MCP_ALLOWED_HOSTS": "*",
+        "LINUX_MCP_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

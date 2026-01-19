@@ -1,0 +1,56 @@
+---
+# SSH configuration tasks
+
+- name: Create .ssh directory for mcp-reader
+  ansible.builtin.file:
+    path: /home/mcp-reader/.ssh
+    state: directory
+    owner: mcp-reader
+    group: mcp-reader
+    mode: "0700"
+
+- name: Deploy mcp-reader authorized_keys with forced-command
+  ansible.builtin.template:
+    src: mcp-reader-authorized_keys.j2
+    dest: /home/mcp-reader/.ssh/authorized_keys
+    owner: mcp-reader
+    group: mcp-reader
+    mode: "0600"
+
+- name: Create .ssh directory for pra-runner
+  ansible.builtin.file:
+    path: /home/pra-runner/.ssh
+    state: directory
+    owner: pra-runner
+    group: pra-runner
+    mode: "0700"
+
+- name: Deploy pra-runner authorized_keys with forced-command
+  ansible.builtin.template:
+    src: pra-runner-authorized_keys.j2
+    dest: /home/pra-runner/.ssh/authorized_keys
+    owner: pra-runner
+    group: pra-runner
+    mode: "0600"
+
+- name: Ensure SSH server is configured securely
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: sshd -t -f %s
+  loop:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication no"
+    - regexp: "^PubkeyAuthentication"
+      line: "PubkeyAuthentication yes"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin prohibit-password"
+  notify: Reload SSH
+
+- name: Ensure SSH server is running
+  ansible.builtin.systemd:
+    name: sshd
+    state: started
+    enabled: true

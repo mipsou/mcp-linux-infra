@@ -1,0 +1,153 @@
+#!/bin/bash
+#
+# MCP Read-Only Wrapper
+#
+# Forced-command SSH wrapper pour l'utilisateur mcp-reader.
+# Whitelist stricte de commandes read-only (diagnostics uniquement).
+#
+# Déployé sur: /usr/local/bin/mcp-wrapper
+# Permissions: 755, owner root:root
+#
+# Configuration authorized_keys:
+# command="/usr/local/bin/mcp-wrapper",no-pty,no-agent-forwarding,no-X11-forwarding ssh-ed25519 ...
+#
+
+set -euo pipefail
+
+# Log toutes les tentatives d'exécution
+LOGFILE="/var/log/mcp-wrapper.log"
+echo "$(date -Iseconds) USER=$USER CMD=$SSH_ORIGINAL_COMMAND" >> "$LOGFILE" 2>/dev/null || true
+
+# Si pas de commande, rejeter
+if [ -z "${SSH_ORIGINAL_COMMAND:-}" ]; then
+    echo "ERROR: No command specified" >&2
+    exit 1
+fi
+
+# Whitelist de commandes read-only
+case "$SSH_ORIGINAL_COMMAND" in
+    # Systemd services
+    "systemctl status "*)
+        exec $SSH_ORIGINAL_COMMAND --no-pager
+        ;;
+    "systemctl show "*)
+        exec $SSH_ORIGINAL_COMMAND --no-pager
+        ;;
+    "systemctl list-units"*)
+        exec $SSH_ORIGINAL_COMMAND --no-pager
+        ;;
+    "systemctl list-unit-files"*)
+        exec $SSH_ORIGINAL_COMMAND --no-pager
+        ;;
+
+    # Journalctl (logs)
+    "journalctl "*)
+        # Force --no-pager pour éviter blocage
+        exec $SSH_ORIGINAL_COMMAND --no-pager
+        ;;
+
+    # Podman (read-only)
+    "podman ps"*|"podman images"*|"podman inspect "*)
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+    "podman logs "*)
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+
+    # Network diagnostics
+    "ss -lntup"|"ss -antup")
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+    "ip addr show"|"ip a"|"ip addr"|"ip address")
+        exec ip addr show
+        ;;
+    "ip route show"|"ip r"|"ip route")
+        exec ip route show
+        ;;
+    "ping -c "*)
+        # Limiter ping à 10 packets max
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+
+    # DNS
+    "cat /etc/resolv.conf")
+        exec cat /etc/resolv.conf
+        ;;
+    "resolvectl status")
+        exec resolvectl status
+        ;;
+
+    # System info
+    "cat /etc/os-release")
+        exec cat /etc/os-release
+        ;;
+    "cat /proc/cpuinfo")
+        exec cat /proc/cpuinfo
+        ;;
+    "cat /proc/meminfo")
+        exec cat /proc/meminfo
+        ;;
+    "cat /proc/loadavg")
+        exec cat /proc/loadavg
+        ;;
+    "uname -a")
+        exec uname -a
+        ;;
+    "uptime")
+        exec uptime
+        ;;
+    "hostname -f"|"hostname")
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+
+    # Disk usage
+    "df -h"*|"df -h -x tmpfs -x devtmpfs")
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+    "lsblk"*)
+        exec $SSH_ORIGINAL_COMMAND
+        ;;
+
+    # Memory
+    "free -h")
+        exec free -h
+        ;;
+
+    # Logs (whitelist paths)
+    "tail -n "*/var/log/*)
+        # Vérifier que le chemin est dans /var/log
+        if [[ "$SSH_ORIGINAL_COMMAND" =~ tail\ -n\ [0-9]+\ /var/log/.* ]]; then
+            exec $SSH_ORIGINAL_COMMAND
+        else
+            echo "DENIED: Log path must be in /var/log" >&2
+            exit 1
+        fi
+        ;;
+
+    "cat /var/log/"*)
+        # Vérifier que le chemin est dans /var/log (read-only)
+        if [[ "$SSH_ORIGINAL_COMMAND" =~ cat\ /var/log/.* ]]; then
+            exec $SSH_ORIGINAL_COMMAND
+        else
+            echo "DENIED: Log path must be in /var/log" >&2
+            exit 1
+        fi
+        ;;
+
+    "grep "*)
+        # Autoriser grep sur logs uniquement
+        if [[ "$SSH_ORIGINAL_COMMAND" =~ grep.*\ /var/log/.* ]]; then
+            exec $SSH_ORIGINAL_COMMAND
+        else
+            echo "DENIED: grep only allowed on /var/log" >&2
+            exit 1
+        fi
+        ;;
+
+    # Default: DENY
+    *)
+        echo "DENIED: Command not whitelisted: $SSH_ORIGINAL_COMMAND" >&2
+        echo "$(date -Iseconds) DENIED: $SSH_ORIGINAL_COMMAND" >> "$LOGFILE" 2>/dev/null || true
+        exit 1
+        ;;
+esac
