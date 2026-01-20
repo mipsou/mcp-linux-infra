@@ -47,7 +47,7 @@ async def _execute_ssh_command_internal(
     """
     Internal SSH command execution
 
-    Uses SmartSSHManager's execute_read_command or execute_pra_command
+    Uses SmartSSHManager's execute_read_command or execute_exec_command
     depending on the SSH user.
     """
     ssh_manager = get_smart_ssh_manager()
@@ -60,9 +60,9 @@ async def _execute_ssh_command_internal(
             command=["/bin/sh", "-c", command],
             username=ssh_user
         )
-    elif ssh_user == "pra-runner":
-        # PRA action command
-        returncode, stdout, stderr = await ssh_manager.execute_pra_command(
+    elif ssh_user == "exec-runner":
+        # remote execution command
+        returncode, stdout, stderr = await ssh_manager.execute_exec_command(
             host=host,
             action=command,
             username=ssh_user
@@ -119,7 +119,7 @@ async def execute_ssh_command(
             suggestions += f"""
   ✅ This command appears SAFE (read-only)
   → You can analyze it with: analyze_command("{command}")
-  → Or execute once via PRA: propose_pra_action(action="{command}", host="{host}")
+  → Or execute once via Remote Execution: propose_remote_execution(action="{command}", host="{host}")
 """
         elif analysis.recommended_action == 'BLOCK_PERMANENTLY':
             suggestions += f"""
@@ -130,7 +130,7 @@ async def execute_ssh_command(
         else:
             suggestions += f"""
   → Analyze the command: analyze_command("{command}")
-  → Execute once via PRA: propose_pra_action(action="{command}", host="{host}")
+  → Execute once via Remote Execution: propose_remote_execution(action="{command}", host="{host}")
 """
 
         return f"""❌ COMMAND BLOCKED

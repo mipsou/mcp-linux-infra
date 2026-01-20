@@ -3,7 +3,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from .tools.diagnostics import logs, network, services, system
-from .tools.pra import actions
+from .tools.Remote Execution import actions
 from .tools.execution import ssh_executor
 
 # Initialize MCP server with FastMCP
@@ -143,44 +143,44 @@ async def analyze_errors(
 
 
 # ============================================================================
-# PRA ACTIONS (Exec via SSH pra-runner, requires human validation)
+# Remote Execution ACTIONS (Exec via SSH exec-runner, requires human validation)
 # ============================================================================
 
 @mcp.tool()
-async def propose_pra_action(
+async def propose_remote_execution(
     action: str, host: str, rationale: str, auto_approve: bool = False
 ) -> str:
     """
-    Propose a PRA action for human validation.
+    Propose a remote execution for human validation.
 
-    Step 1 of PRA workflow.
+    Step 1 of Remote Execution workflow.
     """
-    return await actions.propose_pra_action(action, host, rationale, auto_approve)
+    return await actions.propose_remote_execution(action, host, rationale, auto_approve)
 
 
 @mcp.tool()
-async def approve_pra_action(action_id: str, approved: bool, approver: str = "human") -> str:
+async def approve_remote_execution(action_id: str, approved: bool, approver: str = "human") -> str:
     """
-    Approve or reject a proposed PRA action.
+    Approve or reject a proposed remote execution.
 
-    Step 2 of PRA workflow (human validation).
+    Step 2 of Remote Execution workflow (human validation).
     """
-    return await actions.approve_pra_action(action_id, approved, approver)
+    return await actions.approve_remote_execution(action_id, approved, approver)
 
 
 @mcp.tool()
-async def execute_pra_action(action_id: str) -> str:
+async def execute_remote_execution(action_id: str) -> str:
     """
-    Execute an approved PRA action.
+    Execute an approved remote execution.
 
-    Step 3 of PRA workflow (execution).
+    Step 3 of Remote Execution workflow (execution).
     """
-    return await actions.execute_pra_action(action_id)
+    return await actions.execute_remote_execution(action_id)
 
 
 @mcp.tool()
 async def list_pending_actions() -> str:
-    """List all pending PRA actions awaiting approval."""
+    """List all pending remote executions awaiting approval."""
     return await actions.list_pending_actions()
 
 
@@ -425,8 +425,8 @@ Can Auto-Add: {'Yes ✅' if result['suggestion']['can_auto_add'] else 'No ⚠️
    Level: AUTO
    User: {result['suggestion']['ssh_user']}
 
-2. Execute once via PRA:
-   Use: propose_pra_action(action="{command}", host="{host}")
+2. Execute once via Remote Execution:
+   Use: propose_remote_execution(action="{command}", host="{host}")
 """
     elif result['recommended_action'] == 'ADD_MANUAL':
         output += f"""1. Add to whitelist as MANUAL:
@@ -434,8 +434,8 @@ Can Auto-Add: {'Yes ✅' if result['suggestion']['can_auto_add'] else 'No ⚠️
    Level: MANUAL
    User: {result['suggestion']['ssh_user']}
 
-2. Execute once via PRA:
-   Use: propose_pra_action(action="{command}", host="{host}")
+2. Execute once via Remote Execution:
+   Use: propose_remote_execution(action="{command}", host="{host}")
 """
     elif result['recommended_action'] == 'BLOCK_PERMANENTLY':
         output += """1. DO NOT add to whitelist - DANGEROUS
@@ -449,8 +449,8 @@ You can execute it directly using:
 """
     else:
         output += """1. Manual review required
-2. Execute once via PRA if needed:
-   Use: propose_pra_action(action="{}", host="{}")
+2. Execute once via Remote Execution if needed:
+   Use: propose_remote_execution(action="{}", host="{}")
 """
 
     return output

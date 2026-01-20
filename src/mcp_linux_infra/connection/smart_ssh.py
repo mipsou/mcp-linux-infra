@@ -61,7 +61,7 @@ class SmartSSHManager:
         self._exec_key = None
         if self._auth_mode == SSHAuthMode.DIRECT:
             self._reader_key = self._load_key(CONFIG.ssh_key_path)
-            self._exec_key = self._load_key(CONFIG.pra_key_path)
+            self._exec_key = self._load_key(CONFIG.exec_key_path)
 
         # Audit de la configuration détectée
         self._log_auth_mode()
@@ -86,8 +86,8 @@ class SmartSSHManager:
             return SSHAuthMode.AGENT
 
         # Fallback: clés directes
-        if CONFIG.ssh_key_path and CONFIG.pra_key_path:
-            if Path(CONFIG.ssh_key_path).exists() and Path(CONFIG.pra_key_path).exists():
+        if CONFIG.ssh_key_path and CONFIG.exec_key_path:
+            if Path(CONFIG.ssh_key_path).exists() and Path(CONFIG.exec_key_path).exists():
                 return SSHAuthMode.DIRECT
 
         # Aucune méthode disponible
@@ -272,8 +272,8 @@ class SmartSSHManager:
     async def get_exec_connection(
         self, host: str, username: str | None = None
     ) -> SSHClientConnection:
-        """Get exec SSH connection (PRA actions)."""
-        username = username or CONFIG.pra_user
+        """Get exec SSH connection (remote executions)."""
+        username = username or CONFIG.exec_user
         key = f"{username}@{host}"
 
         async with self._lock:
@@ -302,7 +302,7 @@ class SmartSSHManager:
                         host=host,
                         username=username,
                         client_keys=[self._exec_key] if self._exec_key else None,
-                        passphrase=CONFIG.pra_key_passphrase,
+                        passphrase=CONFIG.exec_key_passphrase,
                         known_hosts=None,
                         connect_timeout=CONFIG.ssh_connection_timeout,
                         keepalive_interval=CONFIG.ssh_keepalive_interval,
@@ -324,19 +324,19 @@ class SmartSSHManager:
                             "error": "ssh_agent_pra_key_missing",
                             "host": host,
                             "username": username,
-                            "solution": f"Load PRA key with: ssh-add {CONFIG.pra_key_path or '/path/to/pra-exec.key'}",
+                            "solution": f"Load Remote Execution key with: ssh-add {CONFIG.exec_key_path or '/path/to/exec-runner.key'}",
                         },
                         level=LogLevel.ERROR,
                     )
                     raise SSHConnectionError(
-                        f"SSH Agent active but pra-exec key not loaded.\n"
-                        f"Fix: ssh-add {CONFIG.pra_key_path or '/path/to/pra-exec.key'}"
+                        f"SSH Agent active but exec-runner key not loaded.\n"
+                        f"Fix: ssh-add {CONFIG.exec_key_path or '/path/to/exec-runner.key'}"
                     )
                 raise
 
             except Exception as e:
                 log_ssh_connect(host, username, Status.FAILURE, error=str(e))
-                raise SSHConnectionError(f"Failed to connect to {host} for PRA: {e}")
+                raise SSHConnectionError(f"Failed to connect to {host} for Remote Execution: {e}")
 
     async def execute_read_command(
         self, host: str, command: list[str], username: str | None = None
@@ -365,11 +365,11 @@ class SmartSSHManager:
         except Exception as e:
             raise SSHConnectionError(f"Command execution failed on {host}: {e}")
 
-    async def execute_pra_command(
+    async def execute_exec_command(
         self, host: str, action: str, username: str | None = None
     ) -> tuple[int, str, str]:
-        """Execute PRA action."""
-        username = username or CONFIG.pra_user
+        """Execute remote execution."""
+        username = username or CONFIG.exec_user
 
         if not CONFIG.is_host_allowed(host):
             audit.log_event(
@@ -390,7 +390,7 @@ class SmartSSHManager:
             return returncode, stdout, stderr
 
         except Exception as e:
-            raise SSHConnectionError(f"PRA action '{action}' failed on {host}: {e}")
+            raise SSHConnectionError(f"remote execution '{action}' failed on {host}: {e}")
 
     async def close_all(self):
         """Close all connections."""
@@ -449,14 +449,14 @@ async def execute_command(
         return await manager.execute_read_command(host, command, username)
 
 
-async def execute_pra_action(
+async def execute_remote_execution(
     action: str,
     host: str,
     username: str | None = None,
 ) -> tuple[int, str, str]:
-    """Execute PRA action (auto-detect best auth method)."""
+    """Execute remote execution (auto-detect best auth method)."""
     manager = get_smart_ssh_manager()
-    return await manager.execute_pra_command(host, action, username)
+    return await manager.execute_exec_command(host, action, username)
 
 
 def get_current_auth_mode() -> SSHAuthMode:

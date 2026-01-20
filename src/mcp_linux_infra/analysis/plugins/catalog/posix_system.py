@@ -421,7 +421,7 @@ class PosixSystemPlugin(CommandPlugin):
                 pattern=r'^xargs(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Build and execute command lines',
                 rationale='Can execute arbitrary commands - requires approval',
                 examples=[

@@ -166,7 +166,7 @@ def log_pra_action(
     result: dict | None = None,
     error: str | None = None,
 ):
-    """Log PRA action lifecycle."""
+    """Log remote execution lifecycle."""
     audit.log_event(
         event_type,
         status,

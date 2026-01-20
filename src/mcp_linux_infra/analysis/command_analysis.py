@@ -394,7 +394,7 @@ def analyze_command_safety(command: str) -> CommandAnalysis:
         category=risk_info['category'],
         is_readonly=risk_info['is_readonly'],
         suggested_level=risk_info['suggestion'],
-        suggested_ssh_user='mcp-reader' if risk_info['is_readonly'] else 'pra-runner',
+        suggested_ssh_user='mcp-reader' if risk_info['is_readonly'] else 'exec-runner',
         rationale=risk_info['reason'],
         similar_commands=find_similar_commands(command),
         can_auto_add=risk_info['risk'] == RiskLevel.LOW,

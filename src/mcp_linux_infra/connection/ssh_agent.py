@@ -154,18 +154,18 @@ class SSHAgentConnectionManager:
         self, host: str, username: str | None = None
     ) -> SSHClientConnection:
         """
-        Get exec SSH connection via Agent (pra-exec key).
+        Get exec SSH connection via Agent (exec-runner key).
 
         SÉCURITÉ:
-        - Clé pra-exec.key doit être chargée dans SSH Agent
+        - Clé exec-runner.key doit être chargée dans SSH Agent
         - Séparation stricte: clé différente de mcp-reader
         """
         if not self._agent_available:
             raise SSHConnectionError(
-                "SSH Agent not available. Required for PRA actions."
+                "SSH Agent not available. Required for remote executions."
             )
 
-        username = username or CONFIG.pra_user
+        username = username or CONFIG.exec_user
         key = f"{username}@{host}"
 
         async with self._lock:
@@ -199,20 +199,20 @@ class SSHAgentConnectionManager:
                         {
                             "host": host,
                             "username": username,
-                            "error": "pra-exec key not loaded in SSH Agent",
-                            "solution": f"Run: ssh-add {CONFIG.pra_key_path}",
+                            "error": "exec-runner key not loaded in SSH Agent",
+                            "solution": f"Run: ssh-add {CONFIG.exec_key_path}",
                         },
                         host=host,
                     )
                     raise SSHConnectionError(
-                        f"pra-exec key not found in SSH Agent. "
-                        f"Load it with: ssh-add {CONFIG.pra_key_path or '/path/to/pra-exec.key'}"
+                        f"exec-runner key not found in SSH Agent. "
+                        f"Load it with: ssh-add {CONFIG.exec_key_path or '/path/to/exec-runner.key'}"
                     )
                 raise
 
             except Exception as e:
                 log_ssh_connect(host, username, Status.FAILURE, error=str(e))
-                raise SSHConnectionError(f"Failed to connect to {host} for PRA: {e}")
+                raise SSHConnectionError(f"Failed to connect to {host} for Remote Execution: {e}")
 
     async def execute_read_command(
         self, host: str, command: list[str], username: str | None = None
@@ -249,11 +249,11 @@ class SSHAgentConnectionManager:
             log_ssh_command(host, username, command, Status.FAILURE, -1, str(e))
             raise SSHConnectionError(f"Command execution failed on {host}: {e}")
 
-    async def execute_pra_command(
+    async def execute_exec_command(
         self, host: str, action: str, username: str | None = None
     ) -> tuple[int, str, str]:
-        """Execute PRA action via SSH Agent."""
-        username = username or CONFIG.pra_user
+        """Execute remote execution via SSH Agent."""
+        username = username or CONFIG.exec_user
 
         # Security: host whitelist
         if not CONFIG.is_host_allowed(host):
@@ -282,7 +282,7 @@ class SSHAgentConnectionManager:
 
         except Exception as e:
             log_ssh_command(host, username, [action], Status.FAILURE, -1, str(e))
-            raise SSHConnectionError(f"PRA action '{action}' failed on {host}: {e}")
+            raise SSHConnectionError(f"remote execution '{action}' failed on {host}: {e}")
 
     async def close_all(self):
         """Close all connections."""
@@ -351,11 +351,11 @@ async def execute_command_via_agent(
         return await manager.execute_read_command(host, command, username)
 
 
-async def execute_pra_action_via_agent(
+async def execute_remote_execution_via_agent(
     action: str,
     host: str,
     username: str | None = None,
 ) -> tuple[int, str, str]:
-    """Execute PRA action via SSH Agent."""
+    """Execute remote execution via SSH Agent."""
     manager = get_ssh_agent_manager()
-    return await manager.execute_pra_command(host, action, username)
+    return await manager.execute_exec_command(host, action, username)

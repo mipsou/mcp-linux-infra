@@ -22,7 +22,7 @@ class CommandRule:
     pattern: str                    # Regex pattern to match command
     auth_level: AuthLevel          # Authorization level
     description: str               # Human-readable description
-    ssh_user: str                  # SSH user to use (mcp-reader or pra-runner)
+    ssh_user: str                  # SSH user to use (mcp-reader or exec-runner)
     rationale: str                 # Why this authorization level?
 
     def __post_init__(self):
