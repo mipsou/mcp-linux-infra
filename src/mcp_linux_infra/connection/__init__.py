@@ -6,7 +6,7 @@ from .smart_ssh import (
     SSHAuthMode,
     SmartSSHManager,
     execute_command,
-    execute_pra_action,
+    execute_remote_execution,
     get_current_auth_mode,
     get_smart_ssh_manager,
 )
@@ -18,5 +18,5 @@ __all__ = [
     "get_smart_ssh_manager",
     "get_current_auth_mode",
     "execute_command",
-    "execute_pra_action",
+    "execute_remote_execution",
 ]

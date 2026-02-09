@@ -106,7 +106,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^kill(\s+.*)?$',
                 risk=RiskLevel.HIGH,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Send signal to process',
                 rationale='Can terminate processes - requires approval',
                 examples=[
@@ -126,7 +126,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^killall(\s+.*)?$',
                 risk=RiskLevel.HIGH,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Kill processes by name',
                 rationale='Mass termination - requires approval',
                 examples=[
@@ -144,7 +144,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^pkill(\s+.*)?$',
                 risk=RiskLevel.HIGH,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Signal processes by name',
                 rationale='Can terminate processes - requires approval',
                 examples=[
@@ -163,7 +163,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^nice(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Run program with modified priority',
                 rationale='Changes scheduling priority - requires approval',
                 examples=[
@@ -179,7 +179,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^renice(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Alter priority of running process',
                 rationale='Changes process priority - requires approval',
                 examples=[
@@ -197,7 +197,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^nohup(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Run command immune to hangups',
                 rationale='Starts background process - requires approval',
                 examples=[
@@ -261,7 +261,7 @@ class PosixProcessPlugin(CommandPlugin):
                 pattern=r'^strace(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Trace system calls',
                 rationale='Debugging tool - may impact performance',
                 examples=[

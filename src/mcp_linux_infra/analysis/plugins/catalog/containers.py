@@ -134,7 +134,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^podman\s+restart(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Restart container',
                 rationale='Container restart - requires approval',
                 examples=[
@@ -149,7 +149,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^podman\s+start(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Start container',
                 rationale='Container start - requires approval',
                 examples=[
@@ -162,7 +162,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^podman\s+stop(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Stop container',
                 rationale='Container stop - requires approval',
                 examples=[
@@ -177,7 +177,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^podman\s+rm(\s+.*)?$',
                 risk=RiskLevel.HIGH,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Remove container',
                 rationale='Destructive operation - requires approval',
                 examples=[
@@ -272,7 +272,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^docker\s+restart(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Restart container',
                 rationale='Container restart - requires approval',
                 examples=[
@@ -285,7 +285,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^docker\s+start(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Start container',
                 rationale='Container start - requires approval',
                 examples=[
@@ -298,7 +298,7 @@ class ContainersPlugin(CommandPlugin):
                 pattern=r'^docker\s+stop(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Stop container',
                 rationale='Container stop - requires approval',
                 examples=[

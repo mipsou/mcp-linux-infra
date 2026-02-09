@@ -332,7 +332,7 @@ class PosixTextPlugin(CommandPlugin):
                 pattern=r'^tee(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Read from stdin and write to files',
                 rationale='Writes to files - requires approval',
                 examples=[

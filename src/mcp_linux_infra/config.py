@@ -34,13 +34,22 @@ class Config(BaseSettings):
         default=None, description="Passphrase for encrypted SSH keys"
     )
 
-    # SSH Configuration - PRA Exec (actions)
-    pra_key_path: Path | None = Field(
-        default=None, description="Path to pra-exec SSH private key"
+    # SSH Configuration - Remote Execution (actions)
+    exec_key_path: Path | None = Field(
+        default=None, description="Path to exec-runner SSH private key"
     )
-    pra_user: str = Field(default="pra-runner", description="PRA execution SSH user")
+    exec_user: str = Field(default="exec-runner", description="Remote execution SSH user")
+    exec_key_passphrase: str | None = Field(
+        default=None, description="Passphrase for exec key"
+    )
+
+    # Backward compatibility (deprecated - will be removed in v1.0)
+    pra_key_path: Path | None = Field(
+        default=None, description="[DEPRECATED] Use exec_key_path instead"
+    )
+    pra_user: str | None = Field(default=None, description="[DEPRECATED] Use exec_user instead")
     pra_key_passphrase: str | None = Field(
-        default=None, description="Passphrase for PRA key"
+        default=None, description="[DEPRECATED] Use exec_key_passphrase instead"
     )
 
     # Connection pooling
@@ -69,16 +78,16 @@ class Config(BaseSettings):
         default=None,
         description="Whitelist for allowed hosts (comma-separated, * for all)",
     )
-    require_approval_for_pra: bool = Field(
-        default=True, description="Require human approval for PRA actions"
+    require_approval_for_exec: bool = Field(
+        default=True, description="Require human approval for remote executions"
     )
 
-    # PRA Configuration
-    pra_audit_log: Path = Field(
-        default=Path("/var/log/mcp-pra.log"),
-        description="PRA audit log path on MCP server",
+    # Remote Execution Configuration
+    exec_audit_log: Path = Field(
+        default=Path("/var/log/mcp-exec.log"),
+        description="Remote execution audit log path on MCP server",
     )
-    pra_max_impact: Literal["low", "medium", "high"] = Field(
+    exec_max_impact: Literal["low", "medium", "high"] = Field(
         default="medium", description="Maximum allowed impact level for auto-actions"
     )
 
@@ -90,7 +99,7 @@ class Config(BaseSettings):
         default=120, description="Default command timeout in seconds"
     )
 
-    @field_validator("ssh_key_path", "pra_key_path", "log_dir")
+    @field_validator("ssh_key_path", "exec_key_path", "pra_key_path", "log_dir")
     @classmethod
     def expand_path(cls, v: Path | None) -> Path | None:
         """Expand ~ and environment variables in paths."""
@@ -111,6 +120,16 @@ class Config(BaseSettings):
         if self.allowed_hosts is None:
             return True
         return host in self.allowed_hosts
+
+    def model_post_init(self, __context) -> None:
+        """Migrate deprecated PRA fields to new exec fields."""
+        # Backward compatibility: pra_* → exec_*
+        if self.pra_key_path and not self.exec_key_path:
+            self.exec_key_path = self.pra_key_path
+        if self.pra_user and not self.exec_user:
+            self.exec_user = self.pra_user
+        if self.pra_key_passphrase and not self.exec_key_passphrase:
+            self.exec_key_passphrase = self.pra_key_passphrase
 
 
 # Global singleton configuration

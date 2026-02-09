@@ -95,75 +95,75 @@ COMMAND_WHITELIST: List[CommandRule] = [
     ),
 
     # ═══════════════════════════════════════════════════
-    # MANUAL - Requires Approval (via pra-runner)
+    # MANUAL - Requires Approval (via exec-runner)
     # ═══════════════════════════════════════════════════
     CommandRule(
         pattern=r"^systemctl restart\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Restart system service",
         rationale="Service interruption, needs approval"
     ),
     CommandRule(
         pattern=r"^systemctl reload\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Reload service configuration",
         rationale="Config change, minimal impact but needs review"
     ),
     CommandRule(
         pattern=r"^systemctl start\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Start system service",
         rationale="System state change"
     ),
     CommandRule(
         pattern=r"^systemctl stop\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Stop system service",
         rationale="Service interruption"
     ),
     CommandRule(
         pattern=r"^podman restart\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Restart container",
         rationale="Service interruption"
     ),
     CommandRule(
         pattern=r"^podman stop\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Stop container",
         rationale="Service interruption"
     ),
     CommandRule(
         pattern=r"^podman start\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Start container",
         rationale="System state change"
     ),
     CommandRule(
         pattern=r"^ansible-playbook\s+(?!.*--check)",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Execute Ansible playbook",
         rationale="Infrastructure changes, needs approval"
     ),
     CommandRule(
         pattern=r"^reboot$",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Reboot system",
         rationale="CRITICAL: Full system restart"
     ),
     CommandRule(
         pattern=r"^shutdown\s+",
         auth_level=AuthLevel.MANUAL,
-        ssh_user="pra-runner",
+        ssh_user="exec-runner",
         description="Shutdown system",
         rationale="CRITICAL: System shutdown"
     ),
@@ -229,7 +229,7 @@ def load_whitelist_from_yaml(yaml_path: Path) -> List[CommandRule]:
         manual_approval:
           - pattern: "^systemctl restart "
             description: "Restart service"
-            ssh_user: "pra-runner"
+            ssh_user: "exec-runner"
             rationale: "Service interruption"
 
         blocked:

@@ -236,7 +236,7 @@ class NetworkPlugin(CommandPlugin):
                 pattern=r'^wget(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Download files',
                 rationale='Downloads files to disk - requires approval',
                 examples=[
@@ -273,7 +273,7 @@ class NetworkPlugin(CommandPlugin):
                 pattern=r'^tcpdump(\s+.*)?$',
                 risk=RiskLevel.HIGH,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Packet capture',
                 rationale='Captures network packets - security sensitive',
                 examples=[

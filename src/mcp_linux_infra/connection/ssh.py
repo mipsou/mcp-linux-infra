@@ -22,7 +22,7 @@ class SSHConnectionManager:
 
     Séparation stricte:
     - mcp-reader : read-only (diagnostics)
-    - pra-runner : exec (actions PRA)
+    - exec-runner : exec (actions Remote Execution)
     """
 
     _instance: "SSHConnectionManager | None" = None
@@ -46,7 +46,7 @@ class SSHConnectionManager:
 
         # Configuration
         self._reader_key = self._load_key(CONFIG.ssh_key_path, CONFIG.key_passphrase)
-        self._exec_key = self._load_key(CONFIG.pra_key_path, CONFIG.pra_key_passphrase)
+        self._exec_key = self._load_key(CONFIG.exec_key_path, CONFIG.exec_key_passphrase)
 
         self._initialized = True
 
@@ -104,20 +104,20 @@ class SSHConnectionManager:
         self, host: str, username: str | None = None
     ) -> SSHClientConnection:
         """
-        Get exec SSH connection (PRA actions).
+        Get exec SSH connection (remote executions).
 
-        Uses pra-exec key and pra-runner user.
+        Uses exec-runner key and exec-runner user.
         """
-        username = username or CONFIG.pra_user
+        username = username or CONFIG.exec_user
         key = f"{username}@{host}"
 
         # Security check
-        if not CONFIG.pra_key_path:
+        if not CONFIG.exec_key_path:
             log_security_violation(
                 "pra_exec_no_key",
                 {"host": host, "username": username},
             )
-            raise SSHConnectionError("PRA exec key not configured (pra_key_path)")
+            raise SSHConnectionError("Remote Execution exec key not configured (exec_key_path)")
 
         async with self._lock:
             # Reuse existing connection
@@ -134,7 +134,7 @@ class SSHConnectionManager:
                     username=username,
                     client_keys=[self._exec_key] if self._exec_key else None,
                     known_hosts=None,  # INSECURE: pour dev, utiliser known_hosts en prod
-                    passphrase=CONFIG.pra_key_passphrase,
+                    passphrase=CONFIG.exec_key_passphrase,
                     connect_timeout=CONFIG.ssh_connection_timeout,
                     keepalive_interval=CONFIG.ssh_keepalive_interval,
                 )
@@ -145,7 +145,7 @@ class SSHConnectionManager:
 
             except Exception as e:
                 log_ssh_connect(host, username, Status.FAILURE, error=str(e))
-                raise SSHConnectionError(f"Failed to connect to {host} for PRA exec: {e}")
+                raise SSHConnectionError(f"Failed to connect to {host} for Remote Execution exec: {e}")
 
     async def execute_read_command(
         self, host: str, command: list[str], username: str | None = None
@@ -191,24 +191,24 @@ class SSHConnectionManager:
             log_ssh_command(host, username, command, Status.FAILURE, -1, str(e))
             raise SSHConnectionError(f"Command execution failed on {host}: {e}")
 
-    async def execute_pra_command(
+    async def execute_exec_command(
         self, host: str, action: str, username: str | None = None
     ) -> tuple[int, str, str]:
         """
-        Execute PRA action via pra-runner SSH.
+        Execute remote execution via exec-runner SSH.
 
         IMPORTANT: Cette méthode n'exécute que des actions whitelistées
-        par le wrapper pra-exec sur le système cible.
+        par le wrapper exec-runner sur le système cible.
 
         Args:
             host: Target host
-            action: PRA action name (e.g., "restart_unbound")
-            username: SSH username (default: CONFIG.pra_user)
+            action: remote execution name (e.g., "restart_unbound")
+            username: SSH username (default: CONFIG.exec_user)
 
         Returns:
             (returncode, stdout, stderr)
         """
-        username = username or CONFIG.pra_user
+        username = username or CONFIG.exec_user
 
         # Security check: host whitelist
         if not CONFIG.is_host_allowed(host):
@@ -223,7 +223,7 @@ class SSHConnectionManager:
 
         try:
             # Execute via forced-command wrapper
-            # Le wrapper pra-exec sur le target gère la whitelist
+            # Le wrapper exec-runner sur le target gère la whitelist
             result = await conn.run(action, check=False)
 
             returncode = result.exit_status or 0
@@ -237,7 +237,7 @@ class SSHConnectionManager:
 
         except Exception as e:
             log_ssh_command(host, username, [action], Status.FAILURE, -1, str(e))
-            raise SSHConnectionError(f"PRA action '{action}' failed on {host}: {e}")
+            raise SSHConnectionError(f"remote execution '{action}' failed on {host}: {e}")
 
     async def close_all(self):
         """Close all pooled connections."""
@@ -304,15 +304,15 @@ async def execute_command(
         return await manager.execute_read_command(host, command, username)
 
 
-async def execute_pra_action(
+async def execute_remote_execution(
     action: str,
     host: str,
     username: str | None = None,
 ) -> tuple[int, str, str]:
     """
-    Execute PRA action via pra-runner SSH.
+    Execute remote execution via exec-runner SSH.
 
     Always remote, never local.
     """
     manager = get_ssh_manager()
-    return await manager.execute_pra_command(host, action, username)
+    return await manager.execute_exec_command(host, action, username)

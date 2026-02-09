@@ -126,7 +126,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+restart(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Restart service',
                 rationale='Service restart - requires approval',
                 examples=[
@@ -140,7 +140,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+reload(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Reload service configuration',
                 rationale='Config reload - requires approval',
                 examples=[
@@ -154,7 +154,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+start(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Start service',
                 rationale='Service start - requires approval',
                 examples=[
@@ -167,7 +167,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+stop(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Stop service',
                 rationale='Service stop - requires approval',
                 examples=[
@@ -180,7 +180,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+enable(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Enable service at boot',
                 rationale='Persistent change - requires approval',
                 examples=[
@@ -195,7 +195,7 @@ class SystemdPlugin(CommandPlugin):
                 pattern=r'^systemctl\s+disable(\s+.*)?$',
                 risk=RiskLevel.MEDIUM,
                 level=AuthLevel.MANUAL,
-                ssh_user='pra-runner',
+                ssh_user='exec-runner',
                 description='Disable service at boot',
                 rationale='Persistent change - requires approval',
                 examples=[
