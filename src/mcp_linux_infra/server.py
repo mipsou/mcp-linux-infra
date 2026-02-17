@@ -3,7 +3,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from .tools.diagnostics import logs, network, services, system
-from .tools.Remote Execution import actions
+from .tools.remote_exec import actions
 from .tools.execution import ssh_executor
 
 # Initialize MCP server with FastMCP
